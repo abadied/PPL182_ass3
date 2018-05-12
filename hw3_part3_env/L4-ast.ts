@@ -44,6 +44,7 @@ import { allT, first, rest, second } from './list';
 ;;         |  ( <cexp> <cexp>* )              / AppExp(operator:CExp, operands:CExp[]))
 ;;         |  ( letrec ( binding*) <cexp>+ )  / LetrecExp(bindings:Bindings[], body: CExp) #### L4
 ;;         |  ( set! <var> <cexp>)            / SetExp(var: varRef, val: CExp)             #### L4
+;;         |  (<cexp> lazy)                 / LazyVarDec(var:string)
 ;; <binding>  ::= ( <var> <cexp> )            / Binding(var:VarDecl, val:Cexp)
 ;; <prim-op>  ::= + | - | * | / | < | > | = | not |  eq? | string=?
 ;;                  | cons | car | cdr | list? | number?
@@ -61,6 +62,7 @@ export type Parsed4 = Exp4 | Program4;
 export type Exp4 = DefineExp4 | CExp4;
 export type CompoundExp4 = AppExp4 | IfExp4 | ProcExp4 | LetExp4 | LitExp4 | LetrecExp4 | SetExp4;
 export type CExp4 =  AtomicExp | CompoundExp4;
+export type NewVarDec = VarDecl | LazyVarDec;
 
 export interface Program4 {tag: "Program4"; exps: Exp4[]; };
 export interface DefineExp4 {tag: "DefineExp4"; var: VarDecl; val: CExp4; };
@@ -75,6 +77,8 @@ export interface LitExp4 {tag: "LitExp4"; val: SExp4; };
 // L4
 export interface LetrecExp4 {tag: "LetrecExp4"; bindings: Binding4[]; body: CExp4[]; };
 export interface SetExp4 {tag: "SetExp4"; var: VarRef; val: CExp4; };
+//lazy
+export interface LazyVarDec {tag: "LazyVarDec";  var: string; };
 
 // Type value constructors for disjoint types
 export const makeProgram4 = (exps: Exp4[]): Program4 => ({tag: "Program4", exps: exps});
@@ -99,6 +103,8 @@ export const makeLetrecExp4 = (bindings: Binding4[], body: CExp4[]): LetrecExp4 
     ({tag: "LetrecExp4", bindings: bindings, body: body});
 export const makeSetExp4 = (v: VarRef, val: CExp4): SetExp4 =>
     ({tag: "SetExp4", var: v, val: val});
+//lazy
+export const makeLazyVarDec = (v: string): LazyVarDec => ({tag: "LazyVarDec", var: v});
 
 // Type predicates for disjoint types
 export const isProgram4 = (x: any): x is Program4 => x.tag === "Program4";
@@ -112,7 +118,8 @@ export const isLetExp4 = (x: any): x is LetExp4 => x.tag === "LetExp4";
 export const isLitExp4 = (x: any): x is LitExp4 => x.tag === "LitExp4";
 export const isLetrecExp4 = (x: any): x is LetrecExp4 => x.tag === "LetrecExp4";
 export const isSetExp4 = (x: any): x is SetExp4 => x.tag === "SetExp4";
-
+//lazy
+export const isLazyVarDec = (x:any): x is LazyVarDec => x.tag === "LazyVarDec";
 // Type predicates for type unions
 export const isExp4 = (x: any): x is Exp4 => isDefineExp4(x) || isCExp4(x);
 export const isCompoundExp4 = (x: any): x is CompoundExp4 =>
@@ -174,9 +181,12 @@ const parseAppExp4 = (sexps: any[]): AppExp4 | Error =>
 const parseIfExp4 = (sexps: any[]): IfExp4 | Error =>
     safeFL((cexps: CExp4[]) => makeIfExp4(cexps[0], cexps[1], cexps[2]))(map(parseL4CExp, rest(sexps)));
 
+// const parseProcExp4 = (sexps: any[]): ProcExp4 | Error =>
+//     safeFL((body: CExp4[]) => makeProcExp4( map(makeVarDecl, sexps[1]), body))
+//         (map(parseL4CExp, rest(rest(sexps))));
 const parseProcExp4 = (sexps: any[]): ProcExp4 | Error =>
-    safeFL((body: CExp4[]) => makeProcExp4( map(makeVarDecl, sexps[1]), body))
-        (map(parseL4CExp, rest(rest(sexps))));
+safeFL((body: CExp4[]) => makeProcExp4( map((sexp) => sexp instanceof Array && second(sexp) === "lazy" ? makeLazyVarDec(sexp[0]) : makeVarDecl(sexp), sexps[1]), body))
+    (map(parseL4CExp, rest(rest(sexps))));
 
 // LetExp ::= (let (<binding>*) <cexp>+)
 const parseLetExp4 = (sexps: any[]): LetExp4 | Error =>

@@ -29,7 +29,6 @@ const L3applicativeEval = (exp: CExp | Error, env: Env): Value | Error =>
     isLitExp(exp) ? exp.val :
     isIfExp(exp) ? evalIf(exp, env) :
     isProcExp(exp) ? evalProc(exp, env) :
-    // isLazyExp(exp) ? L3normalEval(exp.lexp, env):
     isAppExp(exp) ? L3applyProcedure(L3applicativeEval(exp.rator, env),
                                     
                                          exp.rands,
