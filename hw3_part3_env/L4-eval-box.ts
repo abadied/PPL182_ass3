@@ -2,7 +2,7 @@
 // L4 with mutation (set!) and env-box model
 
 import { filter, map, reduce, repeat, zip, zipWith } from "ramda";
-import { isArray, isBoolean, isEmpty, isNumber, isString } from "./L3-ast";
+import { isArray, isBoolean, isEmpty, isNumber, isString, isVarDecl } from "./L3-ast";
 import { AtomicExp, BoolExp, LitExp, NumExp, PrimOp, StrExp, VarDecl, VarRef } from "./L3-ast";
 import { isBoolExp, isLitExp, isNumExp, isPrimOp, isStrExp, isVarRef } from "./L3-ast";
 import { makeAppExp, makeBoolExp, makeIfExp, makeLitExp, makeNumExp, makeProcExp, makeStrExp,
@@ -14,7 +14,7 @@ import { isAppExp4, isCExp4, isDefineExp4, isExp4, isIfExp4, isLetrecExp4, isLet
          isLitExp4, isProcExp4, isProgram4, isSetExp4 } from "./L4-ast-box";
 import { parseL4 } from "./L4-ast-box";
 import { applyEnv, applyEnvBdg, globalEnvAddBinding, makeExtEnv, setFBinding,
-         theGlobalEnv, Env } from "./L4-env-box";
+         theGlobalEnv, Env, Thunk, makeThunk, isThunk } from "./L4-env-box";
 import { isClosure4, isCompoundSExp4, isSExp4, makeClosure4, makeCompoundSExp4,
          Closure4, CompoundSExp4, SExp4, Value4 } from "./L4-value-box";
 import { getErrorMessages, hasNoError, isError }  from "./error";
@@ -36,10 +36,28 @@ const L4applicativeEval = (exp: CExp4 | Error, env: Env): Value4 | Error =>
     isLetExp4(exp) ? evalLet4(exp, env) :
     isLetrecExp4(exp) ? evalLetrec4(exp, env) :
     isSetExp4(exp) ? evalSet(exp, env) :
-    isAppExp4(exp) ? L4applyProcedure(L4applicativeEval(exp.rator, env),
-                                      map((rand) => L4applicativeEval(rand, env),
-                                          exp.rands)) :
+    isAppExp4(exp) ? L4AppExpThunk(exp, env) :
     Error(`Bad L4 AST ${exp}`);
+
+const L4AppExpThunk = (exp: AppExp4, env: Env) :  Value4 | Error => {
+    let rator = L4applicativeEval(exp.rator, env);
+    let rands;
+    if (isPrimOp(rator)){
+        rands = map((rand) => L4applicativeEval(rand, env), exp.rands)
+    }else if (isClosure4(rator)){
+        let paramssdecl = map(isVarDecl, rator.params);
+        let pairedargs = [];
+        for (let i = 0 ; i < paramssdecl.length; i++){
+            pairedargs.concat([[exp.rands[i], paramssdecl[i]]])
+        }
+        rands = map((pairedexp) => pairedexp[1] ? L4applicativeEval(pairedexp[0], env) : makeThunk(pairedargs[0], env));
+
+    }else{
+        return Error("unknown appexp");
+    }
+    return L4applyProcedure(rator, rands);                        
+    
+};
 
 export const isTrueValue = (x: Value4 | Error): boolean | Error =>
     isError(x) ? x :
@@ -235,3 +253,6 @@ export const evalParse4 = (s: string): Value4 | Error => {
         return ast;
     }
 }
+
+// Thunk eval
+const evalThunk = (thunk:Thunk): Value4 | Error => ( isProcExp4(thunk.cexp) ? evalProc4(thunk.cexp, thunk.env) : Error("unknown cexp in thunk"));

@@ -35,6 +35,7 @@ import { VarDecl } from './L3-ast';
 import { CExp4 } from './L4-ast-box';
 import { makeClosure4, Value4 } from './L4-value-box';
 import { isError } from "./error";
+import { evalThunk } from "./L4-eval-box"
 
 // ========================================================
 // Box datatype
@@ -56,7 +57,17 @@ const isFBinding = (x: any): x is FBinding => x.tag === "FBinding";
 const makeFBinding = (v: string, val: Value4): FBinding =>
     ({tag: "FBinding", var: v, val: makeBox(val)});
 const getFBindingVar = (f: FBinding): string => f.var;
-export const getFBindingVal = (f: FBinding): Value4 => unbox(f.val);
+export const getFBindingVal = (f: FBinding): Value4 =>
+    {   let val_thunk = unbox(f.val);
+        if(isThunk(val_thunk)){
+            let val = evalThunk(val_thunk);
+            if(isError(val))
+                return;
+            return val;
+        } else{
+            return val_thunk;}
+        };
+
 export const setFBinding = (f: FBinding, val: Value4): void => { setBox(f.val, val); return; };
 
 // ========================================================
@@ -151,3 +162,13 @@ export const globalEnvAddBinding = (v: string, val: Value4): void =>
 
 const applyGlobalEnvBdg = (ge: GlobalEnv, v: string): FBinding | Error =>
     applyFrame(unbox(ge.frame), v);
+
+//thunk implementation
+export interface Thunk{
+    tag: "Thunk";
+    cexp: CExp4;
+    env: Env;
+}
+
+export const makeThunk = (exp: CExp4, curr_env:Env):Thunk => ({tag:"Thunk", cexp:exp, env:curr_env});
+export const isThunk = (x:any): x is Thunk => x.tag === "Thunk";
