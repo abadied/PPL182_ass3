@@ -80,7 +80,7 @@ const evalProc4 = (exp: ProcExp4, env: Env): Closure4 =>
 const L4applyProcedure = (proc: Value4 | Error, args: Array<Value4 | Thunk | Error>): Value4 | Error =>
     isError(proc) ? proc :
     !hasNoError(args) ? Error(`Bad argument: ${getErrorMessages(args)}`) :
-    isPrimOp(proc) ? applyPrimitive(proc, args) :
+    isPrimOp(proc) ? applyPrimitive(proc, <Value4[]>args) :
     isClosure4(proc) ? applyClosure4(proc, args) :
     Error(`Bad procedure ${JSON.stringify(proc)}`);
 
