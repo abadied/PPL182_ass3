@@ -19,6 +19,7 @@ import { isClosure4, isCompoundSExp4, isSExp4, makeClosure4, makeCompoundSExp4,
          Closure4, CompoundSExp4, SExp4, Value4 } from "./L4-value-box";
 import { getErrorMessages, hasNoError, isError }  from "./error";
 import { allT, first, rest, second } from './list';
+import { LazyVarDec } from "../hw3_part3_sub/L3-ast";
 
 // ========================================================
 // Eval functions
@@ -48,9 +49,9 @@ const L4AppExpThunk = (exp: AppExp4, env: Env) :  Value4 | Error => {
         let paramssdecl = map(isVarDecl, rator.params);
         let pairedargs = [];
         for (let i = 0 ; i < paramssdecl.length; i++){
-            pairedargs.concat([[exp.rands[i], paramssdecl[i]]])
+            pairedargs = pairedargs.concat([[exp.rands[i], paramssdecl[i]]])
         }
-        rands = map((pairedexp) => pairedexp[1] ? L4applicativeEval(pairedexp[0], env) : makeThunk(pairedargs[0], env));
+        rands = map((pairedexp) => pairedexp[1] === true ? L4applicativeEval(pairedexp[0], env) : makeThunk(pairedexp[0], env), pairedargs);
 
     }else{
         return Error("unknown appexp");
@@ -76,15 +77,16 @@ const evalProc4 = (exp: ProcExp4, env: Env): Closure4 =>
 // @Pre: none of the args is an Error (checked in applyProcedure)
 // KEY: This procedure does NOT have an env parameter.
 //      Instead we use the env of the closure.
-const L4applyProcedure = (proc: Value4 | Error, args: Array<Value4 | Error>): Value4 | Error =>
+const L4applyProcedure = (proc: Value4 | Error, args: Array<Value4 | Thunk | Error>): Value4 | Error =>
     isError(proc) ? proc :
     !hasNoError(args) ? Error(`Bad argument: ${getErrorMessages(args)}`) :
     isPrimOp(proc) ? applyPrimitive(proc, args) :
     isClosure4(proc) ? applyClosure4(proc, args) :
     Error(`Bad procedure ${JSON.stringify(proc)}`);
 
-const applyClosure4 = (proc: Closure4, args: Value4[]): Value4 | Error => {
-    let vars = map((v: VarDecl) => v.var, proc.params);
+
+const applyClosure4 = (proc: Closure4, args: Array<Value4 | Thunk>): Value4 | Error => {
+    let vars = map((v: VarDecl | LazyVarDec) => v.var, proc.params);
     return evalExps(proc.body, makeExtEnv(vars, args, proc.env));
 }
 
@@ -255,4 +257,4 @@ export const evalParse4 = (s: string): Value4 | Error => {
 }
 
 // Thunk eval
-const evalThunk = (thunk:Thunk): Value4 | Error => ( isProcExp4(thunk.cexp) ? evalProc4(thunk.cexp, thunk.env) : Error("unknown cexp in thunk"));
+export const evalThunk = (thunk:Thunk): Value4 | Error => (  L4applicativeEval(thunk.cexp, thunk.env));
