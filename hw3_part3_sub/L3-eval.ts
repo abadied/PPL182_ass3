@@ -71,7 +71,7 @@ const applyClosure = (proc: Closure, args: CExp[], env: Env): Value | Error => {
     let litArgs = [];
     for(let i = 0 ; i<param_type.length ; i++){
         if (param_type[i]){
-            litArgs = litArgs.concat([args[i]])
+            litArgs = litArgs.concat([args[i]]);
         }else{
             let argval = L3applicativeEval(args[i],env);
             if (isSExp(argval))
