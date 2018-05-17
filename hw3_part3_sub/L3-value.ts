@@ -1,7 +1,7 @@
 // ========================================================
 // Value type definition for L3
 
-import { isPrimOp, CExp, PrimOp, VarDecl } from './L3-ast';
+import { isPrimOp, CExp, PrimOp, VarDecl, NewVarDec } from './L3-ast';
 
 export type Value = SExp;
 
@@ -12,10 +12,10 @@ export const isFunctional = (x: any): x is Functional => isPrimOp(x) || isClosur
 // Closure for L3
 export interface Closure {
     tag: "Closure";
-    params: VarDecl[];
+    params: NewVarDec[];
     body: CExp[];
 };
-export const makeClosure = (params: VarDecl[], body: CExp[]): Closure =>
+export const makeClosure = (params: NewVarDec[], body: CExp[]): Closure =>
     ({tag: "Closure", params: params, body: body});
 export const isClosure = (x: any): x is Closure => x.tag === "Closure";
 

@@ -8,10 +8,9 @@ import { isPrimOp, PrimOp, VarDecl } from './L3-ast';
 import { isEmptySExp, isSymbolSExp, makeEmptySExp, makeSymbolSExp, EmptySExp, SymbolSExp } from './L3-value';
 import { CExp4 } from './L4-ast-box';
 import { Env } from './L4-env-box';
-import { Thunk } from "./L4-env-box"
 
 // Add void for value of side-effect expressions - set! and define
-export type Value4 = SExp4 | Closure4 | Thunk | undefined;
+export type Value4 = SExp4 | Closure4 | undefined;
 
 export type Functional = PrimOp | Closure4;
 export const isFunctional = (x: any): x is Functional => isPrimOp(x) || isClosure4(x);
@@ -44,12 +43,3 @@ export const isSExp4 = (x: any): x is SExp4 =>
 export const makeCompoundSExp4 = (val: SExp4[]): CompoundSExp4 =>
     ({tag: "CompoundSexp4", val: val});
 export const isCompoundSExp4 = (x: any): x is CompoundSExp4 => x.tag === "CompoundSexp4";
-//thunk implementation
-export interface Thunk{
-    tag: "Thunk";
-    cexp: CExp4;
-    env: Env;
-}
-
-export const makeThunk = (exp: CExp4, curr_env:Env):Thunk => ({tag:"Thunk", cexp:exp, env:curr_env});
-export const isThunk = (x: any): x is Thunk => x.tag === "Thunk";

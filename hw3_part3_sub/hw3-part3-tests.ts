@@ -7,7 +7,7 @@ assert.deepEqual(evalParse(`
     1);
 
 assert.deepEqual(evalParse(`
-(L3 (define loop (lambda ((a lazy)) 1) (/ 1 0)))`),
+(L3 (define loop (lambda ((a lazy)) 1)) (loop (/ 1 0)))`),
     1);
 
 assert.deepEqual(evalParse(`
@@ -15,11 +15,14 @@ assert.deepEqual(evalParse(`
     1);
 
 assert.deepEqual(evalParse(`
-(L3 ((lambda ((x lazy) y) (y x)) (/ 1 0) (lambda ((x lazy)) 1))))`),
+(L3 ((lambda ((x lazy) y) (y x)) (/ 1 0) (lambda ((x lazy)) 1)))`),
     1);
 
 assert.deepEqual(evalParse(`
-(L3 ((lambda (x) (x (/ 1 0))) (lambda ((x lazy)) ((lambda ((x lazy)) 1) (/ 1 0))))))`),
+(L3 ((lambda (x) (x (/ 1 0))) (lambda ((x lazy)) ((lambda ((x lazy)) 1) (/ 1 0)))))`),
     1);
 
-    
+
+assert.deepEqual(evalParse(`
+(L3 (define loop (lambda (x) (loop x))) ((lambda (x) ((lambda ((y lazy)) (if (= x 0) 1 y)) (loop 0)))0))`),1);
+

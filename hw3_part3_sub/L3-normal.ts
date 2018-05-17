@@ -23,9 +23,7 @@ Purpose: Evaluate an L3 expression with normal-eval algorithm
 Signature: L3-normal-eval(exp,env)
 Type: CExp * Env => Value
 */
-export const L3normalEval = (exp: CExp | Error, env: Env): Value | Error =>{
-console.log("hi1");
-    
+export const L3normalEval = (exp: CExp | Error, env: Env): Value | Error =>
     isError(exp) ? exp :
     isBoolExp(exp) ? exp.val :
     isNumExp(exp) ? exp.val :
@@ -38,7 +36,7 @@ console.log("hi1");
     // This is the difference between applicative-eval and normal-eval
     // Substitute the arguments into the body without evaluating them first.
     isAppExp(exp) ? L3normalApplyProc(L3normalEval(exp.rator, env), exp.rands, env) :
-    Error(`Bad ast: ${exp}`);}
+    Error(`Bad ast: ${exp}`);
 
 const evalIf = (exp: IfExp, env: Env): Value | Error => {
     const test = L3normalEval(exp.test, env);

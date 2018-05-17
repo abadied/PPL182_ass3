@@ -53,7 +53,7 @@ const L4AppExpThunk = (exp: AppExp4, env: Env) :  Value4 | Error => {
         }
         rands = map((pairedexp) => pairedexp[1] === true ? L4applicativeEval(pairedexp[0], env) : makeThunk(pairedexp[0], env), pairedargs);
 
-    }else{
+    }else {
         return Error("unknown appexp");
     }
     return L4applyProcedure(rator, rands);                        

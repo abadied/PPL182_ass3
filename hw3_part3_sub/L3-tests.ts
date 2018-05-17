@@ -254,15 +254,12 @@ assert.deepEqual(evalParse(`
 (L3 (define compose (lambda (f g) (lambda (x) (f (g x)))))
     ((compose not number?) 2))`),
     false);
-console.log(parseL3(`
-(L3 (define f 
-    (lambda (a (b lazy))
-      a)) (f 1 (/ 1 0)))`).exps[1].rands);
 
-console.log(evalParse(`
-(L3 (define f 
-    (lambda (a (b lazy))
-      a)) (f  (/ 1 0) 1))`));
+
+// console.log(evalParse(`
+// (L3 (define f 
+//     (lambda (a (b lazy))
+//       a)) (f  (/ 1 0) 1))`));
 
 // evalParse(`
 // (L3 (define f 
