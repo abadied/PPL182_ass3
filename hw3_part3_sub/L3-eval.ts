@@ -49,31 +49,13 @@ const evalIf = (exp: IfExp, env: Env): Value | Error => {
 const evalProc = (exp: ProcExp, env: Env): Value =>
     makeClosure(exp.args, exp.body);
 
-// const L3applyProcedure = (proc: Value | Error, args: Array<CExp | Error>, env: Env): Value | Error =>
-//     isError(proc) ? proc :
-//     !hasNoError(args) ? Error(`Bad argument: ${getErrorMessages(args)}`) :
-//     isClosure(proc) ? applyClosure(proc, args, env) :    
-//     isPrimOp(proc) ? applyPrimitive(proc, map((arg) => L3applicativeEval(arg, env),args)) :
-//     Error("Bad procedure " + JSON.stringify(proc))
-
 const L3applyProcedure = (proc: Value | Error, args: Array<CExp | Error>, env: Env): Value | Error =>
-{
-    if(isError(proc)){
-        return proc;
-    } else if(!hasNoError(args)){
-        return Error(`Bad argument: ${getErrorMessages(args)}`);
-    } else if(isClosure(proc)){
-        return applyClosure(proc, args, env);
-    } else if(isPrimOp(proc)){
-        let new_args = map((arg) => L3applicativeEval(arg, env),args);
-        if (!hasNoError){
-            return Error(`Bad argument: ${getErrorMessages(new_args)}`);
-        }
-        return applyPrimitive(proc, new_args);
-    } else {
-        return Error("Bad procedure " + JSON.stringify(proc));
-    }
-}
+    isError(proc) ? proc :
+    !hasNoError(args) ? Error(`Bad argument: ${getErrorMessages(args)}`) :
+    isClosure(proc) ? applyClosure(proc, args, env) :    
+    isPrimOp(proc) ? applyPrimitive(proc, <Value[]>map((arg) => L3applicativeEval(arg, env),args)) :
+    Error("Bad procedure " + JSON.stringify(proc))
+
 
 const valueToLitExp = (v: Value): NumExp | BoolExp | StrExp | LitExp | PrimOp | ProcExp =>
     isNumber(v) ? makeNumExp(v) :
