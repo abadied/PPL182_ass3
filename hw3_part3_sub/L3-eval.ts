@@ -69,7 +69,7 @@ const L3applyProcedure = (proc: Value | Error, args: Array<CExp | Error>, env: E
         if (!hasNoError){
             return Error(`Bad argument: ${getErrorMessages(new_args)}`);
         }
-        return applyPrimitive(proc, map((arg) => L3applicativeEval(arg, env),args));
+        return applyPrimitive(proc, new_args);
     } else {
         return Error("Bad procedure " + JSON.stringify(proc));
     }
